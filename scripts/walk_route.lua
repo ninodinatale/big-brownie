@@ -11,7 +11,7 @@ Tinkr.Routine:LoadRoutine('big-brownie-routine')
 
 
 local Draw = Tinkr.Util.Draw:New()
-local JSON = Tinkr:require("scripts.json")
+local JSON = Tinkr:require("scripts.big-brownie.modules.json")
 local movement = Tinkr:require("scripts.big-brownie.modules.movement")
 
 local tinkrFns = Tinkr:require('Routine.Modules.Exports')
@@ -19,19 +19,19 @@ local tinkrFns = Tinkr:require('Routine.Modules.Exports')
 local json_str = ReadFile('route.json')
 
 if json_str == false then
-    print("Could not read route file.")
+    error("Could not read route file.")
 end
 
 local json_data = JSON.decode(json_str)
 
 if json_str == nil then
-    print("Could not decode route file content.")
+    error("Could not decode route file content.")
 end
 
 local waypoints = json_data.waypoints
 
 if waypoints == nil then
-    print("Route file has no 'waypoints' node.")
+    error("Route file has no 'waypoints' node.")
 end
 
 local inCombat = false

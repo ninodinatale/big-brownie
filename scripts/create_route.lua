@@ -5,8 +5,7 @@
 -- know that this is how you get your local copy of the Tinkr library.
 local Tinkr = ...
 
-local json
-json = Tinkr:require("scripts.json")
+local json = Tinkr:require("scripts.big-brownie.modules.json")
 
 local x1, y1, z1 = ObjectPosition('player')
 
