@@ -11,6 +11,7 @@ local NAME = ...
 
 local positioning = Tinkr:require("scripts.big-brownie.modules.positioning")
 local utils = Tinkr:require("scripts.big-brownie.modules.utils")
+local tinkrFns = Tinkr:require('Routine.Modules.Exports')
 
 local RADIAN_THRESHOLD = 0.1
 
@@ -53,19 +54,68 @@ function Movement.navigateToXYZ(toX, toY, toZ, options)
         options.keepMoving = false
     end
 
+    local targetReached = false
+
     local playerX, playerY, playerZ = ObjectPosition('player')
 
     if positioning.isXYZInRangeOf(playerX, playerY, playerZ, toX, toY, toZ, options.threshold) then
         -- player reached the coordinates
-        TurnLeftStop()
-        TurnRightStop()
         if not options.keepMoving then
             MoveForwardStop()
         end
-        return true
+        targetReached = true
     end
 
-    local targetRadian = positioning.getTargetRadians(playerX, playerY, toX, toY)
+    movePlayer(playerX, playerY, toX, toY, targetReached, options.moveFrequencyDelayMs)
+
+    return targetReached
+end
+
+---
+--- Navigates the player to its target WITHOUT click to move. Returns true
+--- if the player reached the target in consideration of the provided distance, false
+--- otherwise.
+---
+--- distance [number] (optional): The distance in yards to stop before reaching the target's
+---     location. This is used for ranged attack, but also useful for melee to set some buffer
+---     distance. Don't set this to 0 since it can't reach exactly zero and would move
+---     around like crazy.
+--- moveFrequencyDelayMs [number]: The frequency the player moves in milliseconds. This is
+---     useful to make sure the player won't spam "move forward" which would look very non humanly.
+function Movement.navigateToTarget(distance, moveFrequencyDelayMs)
+
+    if distance == nil then
+        distance = 2
+    end
+    if distance == 0 then
+        distance = 2
+    end
+
+    local targetReached = false
+
+    local playerX, playerY, playerZ = ObjectPosition('player')
+    local targetX, targetY, targetZ = ObjectPosition('target')
+
+    if tinkrFns.distance('player', 'target') <= distance then
+        -- player reached the coordinates
+        MoveForwardStop()
+        targetReached = true
+    end
+
+    movePlayer(playerX, playerY, targetX, targetY, targetReached, moveFrequencyDelayMs)
+
+    return targetReached
+end
+
+---
+--- Moves the player accordingly to its target coordinates both positioning and facing.
+---
+--- playerX, playerY: The player coordinates.
+--- targetX, targetY: The target coordinates.
+--- targetReached: Boolean if the target has already reached the location and should only
+---     turn to face the target.
+function movePlayer(playerX, playerY, targetX, targetY, targetReached, moveFrequencyDelayMs)
+    local targetRadian = positioning.getTargetRadians(playerX, playerY, targetX, targetY)
     local playerRadian = GetPlayerFacing()
     local directionRadian = positioning.absoluteRadian(targetRadian - playerRadian)
 
@@ -94,12 +144,12 @@ function Movement.navigateToXYZ(toX, toY, toZ, options)
         TurnLeftStop()
         TurnRightStop()
 
-        utils.runDelayed(function()
-            MoveForwardStart()
-        end, options.moveFrequencyDelayMs)
+        if targetReached == false then
+            utils.runDelayed(function()
+                MoveForwardStart()
+            end, moveFrequencyDelayMs)
+        end
     end
-
-    return false
 end
 
 return Movement
