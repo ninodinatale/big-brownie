@@ -1,14 +1,4 @@
--- Welcome to the Tinkr scripting system! We provide many utilties to help
--- you along the way, below you can find a few examples.
--- The Tinkr object is passed to all scripts and can be accessed via the
--- global vararg as shown below.  You don't need to understand this, just
--- know that this is how you get your local copy of the Tinkr library.
 local Tinkr = ...
-
-Tinkr.Routine:LoadRoutine('big-brownie-routine')
-
-
-
 
 local Draw = Tinkr.Util.Draw:New()
 local JSON = Tinkr:require("scripts.big-brownie.modules.json")
@@ -42,8 +32,9 @@ local next_wp = waypoints[next_wp_index]
 Draw:Sync(function(draw)
 
     if not tinkrFns.enemy('target') or UnitIsDead("target") then
-        inCombat = false
         --- No next target, let's walk the route then.
+        stopCombatIfNotStopped()
+
         draw:SetColor(draw.colors.white)
         draw:Circle(next_wp.x, next_wp.y, next_wp.z, 0.5)
 
@@ -59,34 +50,39 @@ Draw:Sync(function(draw)
             next_wp = waypoints[next_wp_index]
         end
 
-        -- try to get the next target
-        local closestUnit = getClosestAliveUnit(20)
-        -- ObjectFlags(closestUnit) == 0 is alive? 2048 is dead?
+        local closestUnit = getClosestAliveUnit(50)
         if closestUnit ~= nil then
             TargetUnit(closestUnit)
-        else
-            -- TODO: this spams ClearTarget(). Should add check if we have a target first.
-            --ClearTarget()
         end
 
     else
         --- combat/interactions/etc, everything not walking the route
         --- enter combat
-        local targetX, targetY, targetZ = ObjectPosition('target')
-        movement.navigateToXYZ(targetX, targetY, targetZ, { threshold = 2, moveFrequencyDelayMs = 350 })
-
-        if inCombat == false then
-            -- TODO: routine
-            AttackTarget()
-            inCombat = true
+        if tinkrFns.casting() == false then
+            movement.navigateToTarget(30, 300)
         end
+        startCombatIfNotStarted()
     end
 
 end)
 
 Draw:Enable()
 
-function getClosestAliveUnit(search_distance)
+function startCombatIfNotStarted()
+    if not Tinkr.Routine.enabled then
+        print("enable routine!")
+        Tinkr.Routine:Enable()
+    end
+end
+
+function stopCombatIfNotStopped()
+    if Tinkr.Routine.enabled then
+        print("disable routine!")
+        Tinkr.Routine:Disable()
+    end
+end
+
+function getClosestAliveUnit(search_range)
     -- ObjectType.Unit (3) -> so units only
     local objects = Objects(3)
 
@@ -96,7 +92,7 @@ function getClosestAliveUnit(search_distance)
         if not UnitIsDeadOrGhost(unit) then
             local distance = ObjectDistance('player', unit)
             if type(distance) == "number" then
-                if distance == nil or distance <= search_distance then
+                if distance == nil or distance <= search_range then
                     if closestDistance == -1 or distance < closestDistance then
                         if distance ~= 0 then
                             closestDistance = distance
