@@ -4,7 +4,7 @@
 --- Utility functions.
 ---
 
-local NAME=...
+local NAME = ...
 
 local Utils = { }
 
@@ -26,26 +26,53 @@ end
 
 function Utils.printMemberOf(obj, filepath)
 
-    function printAndWriteFile(str)
-        if filepath ~= nil then
-            print(str)
-            WriteFile(filepath, str .. "\n", true)
+    if not type(obj) == "table" then
+        error("Can only print member tables.")
+    end
+
+    -- Emptying file first.
+    WriteFile(filepath, '', true)
+
+    local success = printMemberOf(obj, filepath, 0)
+
+    if success == false then
+        print('There was an error printing members')
+    end
+
+end
+
+function printMemberOf(obj, filepath, depth)
+
+    if depth >= 10 then
+        return true
+    end
+
+    local indent = ''
+    local i = 0
+    while i < depth do
+        indent = indent .. '\t'
+        i = i + 1
+    end
+    for key, value in pairs(obj) do
+        if printAndWriteFile(indent .. tostring(key) .. ': ' .. type(value), filepath) == false then
+            return false
+        end
+        if type(value) == "table" then
+            local success = printMemberOf(value, filepath, depth + 1)
+            if success == false then
+                return false
+            end
         end
     end
 
-    do
+    return true
+end
 
-        printAndWriteFile('Members of "' .. tostring(obj) .. '" ' .. "(key, value):")
-        print("xx")
-        for key, value in pairs(obj) do
-            printAndWriteFile(key .. ' (' .. type(value) .. ')')
-        end
-        --for key, value in pairs(getmetatable(obj)) do
-            --printAndWriteFile(key .. ' (' .. type(value) .. ') (meta)')
-
-        --end
-        print('Successfully printed members')
+function printAndWriteFile(str, filepath)
+    if filepath ~= nil then
+        return WriteFile(filepath, str .. "\n", true)
     end
+    return true
 end
 
 return Utils
