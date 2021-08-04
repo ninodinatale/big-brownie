@@ -56,11 +56,7 @@ Draw:Sync(function(draw)
         end
 
     else
-        --- combat/interactions/etc, everything not walking the route
-        --- enter combat
-        if tinkrFns.casting() == false then
-            movement.navigateToTarget(30, 300)
-        end
+        -- enter combat, movement is then handled by the routine.
         startCombatIfNotStarted()
     end
 

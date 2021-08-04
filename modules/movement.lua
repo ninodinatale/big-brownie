@@ -84,10 +84,7 @@ end
 ---     useful to make sure the player won't spam "move forward" which would look very non humanly.
 function Movement.navigateToTarget(distance, moveFrequencyDelayMs)
 
-    if distance == nil then
-        distance = 2
-    end
-    if distance == 0 then
+    if distance == nil or distance == 0 then
         distance = 2
     end
 
