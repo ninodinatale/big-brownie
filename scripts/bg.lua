@@ -49,7 +49,7 @@ Draw:Sync(function(draw)
             next_wp = waypoints[next_wp_index]
         end
 
-        local closestUnit = getClosestAliveUnit(1)
+        local closestUnit = getClosestAliveUnit(40)
         if closestUnit ~= nil then
             TargetUnit(closestUnit)
         end

@@ -102,7 +102,7 @@ function Movement.navigateToTarget(distance, moveFrequencyDelayMs)
         targetReached = true
     end
 
-    local pathFindingWaypoint = getNextPathFindingWaypoint(toX, toY, toZ)
+    local pathFindingWaypoint = getNextPathFindingWaypoint(targetX, targetY, targetZ)
     movePlayer(playerX, playerY, pathFindingWaypoint.x, pathFindingWaypoint.y, targetReached, moveFrequencyDelayMs)
 
     return targetReached
