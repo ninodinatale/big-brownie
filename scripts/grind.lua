@@ -3,28 +3,27 @@ local Tinkr = ...
 local Draw = Tinkr.Util.Draw:New()
 local JSON = Tinkr:require("scripts.big-brownie.modules.json")
 local movement = Tinkr:require("scripts.big-brownie.modules.movement")
-
 local tinkrFns = Tinkr:require('Routine.Modules.Exports')
+local utils = Tinkr:require("scripts.big-brownie.modules.utils")
 
-local json_str = ReadFile('route.json')
+local profile_json_str = ReadFile("scripts/big-brownie/profiles/" .. BB.profile)
 
-if json_str == false then
-    error("Could not read route file.")
+if profile_json_str == false then
+    utils.logerror("Could not read profile.")
+    return
 end
 
-local json_data = JSON.decode(json_str)
+local profile_json_data = JSON.decode(profile_json_str)
 
-if json_str == nil then
-    error("Could not decode route file content.")
+if profile_json_str == nil then
+    utils.logerror("Could not decode profile content.")
 end
 
-local waypoints = json_data.waypoints
+local waypoints = profile_json_data.waypoints
 
 if waypoints == nil then
-    error("Route file has no 'waypoints' node.")
+    utils.logerror("Profile seems to be corrupt.")
 end
-
-local inCombat = false
 
 local next_wp_index = 1
 local next_wp = waypoints[next_wp_index]
@@ -50,7 +49,7 @@ Draw:Sync(function(draw)
             next_wp = waypoints[next_wp_index]
         end
 
-        local closestUnit = getClosestAliveUnit(50)
+        local closestUnit = getClosestAliveUnit(1)
         if closestUnit ~= nil then
             TargetUnit(closestUnit)
         end

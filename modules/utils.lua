@@ -24,8 +24,11 @@ function Utils.runDelayed(fn, delay_ms)
     end
 end
 
-function Utils.printMemberOf(obj, filepath)
+function Utils.printMemberOf(obj, filepath, maxDepth)
 
+    if maxDepth == nil then
+        maxDepth = 10
+    end
     if not type(obj) == "table" then
         error("Can only print member tables.")
     end
@@ -33,7 +36,7 @@ function Utils.printMemberOf(obj, filepath)
     -- Emptying file first.
     WriteFile(filepath, '', true)
 
-    local success = printMemberOf(obj, filepath, 0)
+    local success = printMemberOf(obj, filepath, 0, maxDepth)
 
     if success == false then
         print('There was an error printing members')
@@ -41,9 +44,9 @@ function Utils.printMemberOf(obj, filepath)
 
 end
 
-function printMemberOf(obj, filepath, depth)
+function printMemberOf(obj, filepath, depth, maxDepth)
 
-    if depth >= 10 then
+    if depth >= maxDepth then
         return true
     end
 
@@ -58,7 +61,7 @@ function printMemberOf(obj, filepath, depth)
             return false
         end
         if type(value) == "table" then
-            local success = printMemberOf(value, filepath, depth + 1)
+            local success = printMemberOf(value, filepath, depth + 1, maxDepth)
             if success == false then
                 return false
             end
@@ -72,7 +75,7 @@ function printMemberOf(obj, filepath, depth)
                 return false
             end
             if type(value) == "table" then
-                local success = printMemberOf(value, filepath, depth + 1)
+                local success = printMemberOf(value, filepath, depth + 1, maxDepth)
                 if success == false then
                     return false
                 end

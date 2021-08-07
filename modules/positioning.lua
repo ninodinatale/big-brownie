@@ -34,6 +34,18 @@ function Positioning.getTargetRadians(x1, y1, x2, y2)
 end
 
 ---
+--- Calculates and returns the coordinates from the passed coordinates x,y, the distance and
+--- the radian.
+---
+--- Note: distance is just the radius of the circle drawn at x,y.
+---
+function Positioning.getXYByRadian(x, y, distance, radian)
+    local newX = distance *  math.cos(radian)
+    local newY = distance *  math.sin(radian)
+    return x + newX, y + newY
+end
+
+---
 --- Returns true if the passed radian is facing "forward" with the passed  and therefore allowed
 --- threshold.
 ---

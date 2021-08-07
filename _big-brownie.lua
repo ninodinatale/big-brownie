@@ -4,26 +4,48 @@
 --- Move the big-brownie directory to `tinkr/scripts/`.
 ---------------------------------------------------------------
 
+
+---------------------------------------------------------------
+--- This is the Big Brownie reference holding all the used
+--- references.
+---------------------------------------------------------------
+_G.BB = {
+    profile = nil,
+}
+
 local Tinkr = ...
 local Command = Tinkr.Util.Commands:New('bb')
 local utils = Tinkr:require("scripts.big-brownie.modules.utils")
 
-Command:Register({ 'start' }, function(program, routine)
-    if program == nil then
-        utils.logerror("No script path provided. Aborted.")
+Command:Register({ 'grind' }, function(profile, routine)
+    if profile == nil or profile == '' then
+        utils.logerror("No profile provided. Aborted.")
         return
+    elseif profile:sub(-#'.json') ~= '.json' then
+         profile = profile .. '.json'
     end
-    if routine == nil then
-        utils.logerror("No routine name provided. Aborted.")
+    if routine == nil or routine == '' then
+        utils.logerror("No routine provided. Aborted.")
         return
     end
 
-    local scriptPath = 'big-brownie/scripts/' .. program .. '.lua'
+    local routineExists = false
+    for key, value in pairs(Tinkr.Routine.routines) do
+        if key == routine then
+            routineExists = true
+            break
+        end
+    end
 
+    if not routineExists then
+        utils.logerror("Provided routine " .. utils.yellow(routine) .. " does not exist.")
+    end
+
+    BB.profile = profile
     Tinkr.Routine:LoadRoutine(routine)
-    Tinkr.Util.Script:Load(scriptPath)
-    utils.log("Starting program " .. program .. " with routine " .. routine .. ".")
+    Tinkr.Util.Script:Load('big-brownie/scripts/grind.lua')
+    utils.log("Starting grinding with profile " .. utils.yellow(profile) .. " and routine " .. utils.yellow(routine) .. ".")
 end)
 
 utils.log('Ready.')
-utils.log("Write " .. utils.yellow("/bb start <program> <routine>") .. " to start your journey!")
+utils.log("Write " .. utils.yellow("/bb grind <profile> <routine>") .. " to start your journey!")

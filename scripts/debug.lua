@@ -1,7 +1,12 @@
 local Tinkr = ...
-local tinkrFns = Tinkr:require('Routine.Modules.Exports')
+--local tinkrFns = Tinkr:require('Routine.Modules.Exports')
+--
+--print(tinkrFns.combat())
 
-print(tinkrFns.combat())
+local Exports = dofile("/Users/nino/src/private/VzNNHkKerQ/lua/Routine/Modules/Exports.luac")
+print(Exports)
+
+--dofile("/Users/nino/src/private/VzNNHkKerQ/lua/init.luac")
 
 --local deb = Tinkr:require('debug')
 --print(deb)

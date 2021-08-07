@@ -9,7 +9,7 @@ local json = Tinkr:require("scripts.big-brownie.modules.json")
 
 local x1, y1, z1 = ObjectPosition('player')
 
-local json_str = ReadFile('route.json')
+local json_str = ReadFile('mulgore.json')
 local waypoint = {
     x = x1,
     y = y1,
@@ -28,4 +28,4 @@ else
 end
 json_str = json.encode(json_data)
 
-local success = WriteFile('route.json', json_str, false)
+local success = WriteFile('mulgore.json', json_str, false)

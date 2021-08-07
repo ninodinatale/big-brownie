@@ -12,6 +12,7 @@ local NAME = ...
 local positioning = Tinkr:require("scripts.big-brownie.modules.positioning")
 local utils = Tinkr:require("scripts.big-brownie.modules.utils")
 local tinkrFns = Tinkr:require('Routine.Modules.Exports')
+local Detour = Tinkr.Util.Detour
 
 local RADIAN_THRESHOLD = 0.1
 
@@ -66,7 +67,9 @@ function Movement.navigateToXYZ(toX, toY, toZ, options)
         targetReached = true
     end
 
-    movePlayer(playerX, playerY, toX, toY, targetReached, options.moveFrequencyDelayMs)
+    local pathFindingWaypoint = getNextPathFindingWaypoint(toX, toY, toZ)
+
+    movePlayer(playerX, playerY, pathFindingWaypoint.x, pathFindingWaypoint.y, targetReached, options.moveFrequencyDelayMs)
 
     return targetReached
 end
@@ -99,7 +102,8 @@ function Movement.navigateToTarget(distance, moveFrequencyDelayMs)
         targetReached = true
     end
 
-    movePlayer(playerX, playerY, targetX, targetY, targetReached, moveFrequencyDelayMs)
+    local pathFindingWaypoint = getNextPathFindingWaypoint(toX, toY, toZ)
+    movePlayer(playerX, playerY, pathFindingWaypoint.x, pathFindingWaypoint.y, targetReached, moveFrequencyDelayMs)
 
     return targetReached
 end
@@ -147,6 +151,16 @@ function movePlayer(playerX, playerY, targetX, targetY, targetReached, moveFrequ
             end, moveFrequencyDelayMs)
         end
     end
+end
+
+function getNextPathFindingWaypoint(toX, toY, toZ)
+    -- TODO: This is not very efficient and performant, since every tick the path is being calculated
+    -- and we just grab the first one as the target. Maye use Utils.runDelayed(), or just keep
+    -- it like that if it doesn't generate any problems. :)
+    local pathFindingWaypoints = Detour:ToPosition(toX, toY, toZ)
+    -- Taking the second waypoint since the first is the player position (?).
+    local pathFindingWaypoint = pathFindingWaypoints[2]
+    return pathFindingWaypoint
 end
 
 return Movement
