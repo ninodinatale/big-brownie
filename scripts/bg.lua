@@ -25,55 +25,108 @@ if waypoints == nil then
     utils.logerror("Profile seems to be corrupt.")
 end
 
-local next_wp_index = 1
-local next_wp = waypoints[next_wp_index]
+-- TODO: implement GUI to pass these values.
+local EATING_AT_HP = 60
+local FOOD_NAME = 'Clefthoof Ribs'
+local ENEMY_SEARCH_RANGE = 40
 
+local firstRun = true
+local nextWpIndex = 1
 Draw:Sync(function(draw)
 
     if not tinkrFns.enemy('target') or UnitIsDead("target") then
         --- No next target, let's walk the route then.
-        stopCombatIfNotStopped()
 
-        draw:SetColor(draw.colors.white)
-        draw:Circle(next_wp.x, next_wp.y, next_wp.z, 0.5)
+        setClosestWaypointIndex()
 
-        local reachedCoords = movement.navigateToXYZ(next_wp.x, next_wp.y, next_wp.z, { threshold = 1, keepMoving = true })
+        handleEatingAndDrinking()
 
-        if reachedCoords == true then
-            next_wp_index = next_wp_index + 1
+        -- Wait for finished eating or 100% health before walking the route.
+        if not tinkrFns.IsEatingOrDrinking() or tinkrFns.health() >= 100 then
 
-            if next_wp_index > table.getn(waypoints) then
-                -- Start from first waypoint again.
-                next_wp_index = 1
+            draw:SetColor(draw.colors.white)
+            draw:Circle(waypoints[nextWpIndex].x, waypoints[nextWpIndex].y, waypoints[nextWpIndex].z, 0.5)
+
+            local reachedCoords = movement.navigateToXYZ(waypoints[nextWpIndex].x, waypoints[nextWpIndex].y, waypoints[nextWpIndex].z, { threshold = 1, keepMoving = true })
+
+            if reachedCoords == true then
+                nextWpIndex = nextWpIndex + 1
+
+                if nextWpIndex > table.getn(waypoints) then
+                    -- Start from first waypoint again.
+                    nextWpIndex = 1
+                end
             end
-            next_wp = waypoints[next_wp_index]
-        end
 
-        local closestUnit = getClosestAliveUnit(40)
-        if closestUnit ~= nil then
-            TargetUnit(closestUnit)
+            local closestUnit = getClosestAliveUnit(ENEMY_SEARCH_RANGE)
+            if closestUnit ~= nil then
+                TargetUnit(closestUnit)
+            end
         end
-
     else
         -- enter combat, movement is then handled by the routine.
         startCombatIfNotStarted()
     end
-
+    firstRun = false
 end)
 
 Draw:Enable()
 
+function getClosestWaypointIndex()
+    local playerX, playerY, playerZ = ObjectPosition('player')
+
+    local closesDistance, closestWaypointIndex
+    for i, waypoint in ipairs(waypoints) do
+        local distance = FastDistance(playerX, playerY, playerZ, waypoint.x, waypoint.y, waypoint.z)
+        if closesDistance == nil or distance < closesDistance then
+            closesDistance = distance
+            closestWaypointIndex = i
+        end
+    end
+    return closestWaypointIndex
+end
+
+---
+--- Finds and sets the closest waypoint.
+---
+function setClosestWaypointIndex()
+    local combatStopped = stopCombatIfNotStopped()
+    if firstRun or combatStopped then
+        local closestWaypointIndex = getClosestWaypointIndex()
+        if closestWaypointIndex ~= nil then
+            nextWpIndex = closestWaypointIndex
+        end
+    end
+end
+
 function startCombatIfNotStarted()
     if not Tinkr.Routine.enabled then
-        print("enable routine!")
         Tinkr.Routine:Enable()
     end
 end
 
+---
+--- Returns true if combat has been stopped, false otherwise.
+---
 function stopCombatIfNotStopped()
     if Tinkr.Routine.enabled then
-        print("disable routine!")
-        Tinkr.Routine:Disable()
+        if not tinkrFns.combat() then
+            Tinkr.Routine:Disable()
+            return true
+        end
+    end
+    return false
+end
+
+function handleEatingAndDrinking()
+    if tinkrFns.health() < EATING_AT_HP then
+        if not tinkrFns.IsEatingOrDrinking() then
+            MoveForwardStop()
+            TurnLeftStop()
+            TurnRightStop()
+            Eval('RunMacroText("/use ' .. FOOD_NAME .. '")', 'r')
+            return
+        end
     end
 end
 
