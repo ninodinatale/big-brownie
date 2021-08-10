@@ -72,6 +72,9 @@ end)
 -- Setting the Draw reference to be able to enable and disable the sync.
 BB.scripts.bg.draw = Draw
 
+------------------------------------------------------------------------------------------
+--- Finds the closest waypoint.
+------------------------------------------------------------------------------------------
 function getClosestWaypointIndex()
     local playerX, playerY, playerZ = ObjectPosition('player')
 
@@ -86,9 +89,9 @@ function getClosestWaypointIndex()
     return closestWaypointIndex
 end
 
----
+------------------------------------------------------------------------------------------
 --- Finds and sets the closest waypoint.
----
+------------------------------------------------------------------------------------------
 function setClosestWaypointIndex()
     local combatStopped = stopCombatIfNotStopped()
     if firstRun or combatStopped then
@@ -105,9 +108,9 @@ function startCombatIfNotStarted()
     end
 end
 
----
+------------------------------------------------------------------------------------------
 --- Returns true if combat has been stopped, false otherwise.
----
+------------------------------------------------------------------------------------------
 function stopCombatIfNotStopped()
     if Tinkr.Routine.enabled then
         if not tinkrFns.combat() then
@@ -118,9 +121,9 @@ function stopCombatIfNotStopped()
     return false
 end
 
----
+------------------------------------------------------------------------------------------
 --- Returns true player started eating, false otherwise.
----
+------------------------------------------------------------------------------------------
 function handleEatingAndDrinking()
     if tinkrFns.health() < BB.config.eatingAtHp then
         if not tinkrFns.IsEatingOrDrinking() then
@@ -133,7 +136,13 @@ function handleEatingAndDrinking()
     end
     return false
 end
-
+------------------------------------------------------------------------------------------
+--- Gets the closest unit alive within the passed search range in yards(?) or nil if
+--- no unit was found.
+---
+--- Note: Also returns friendly units or units which cannot be attacked
+--- by the player.
+------------------------------------------------------------------------------------------
 function getClosestAliveUnit(search_range)
     -- ObjectType.Unit (3) -> so units only
     local objects = Objects(3)

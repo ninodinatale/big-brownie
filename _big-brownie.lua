@@ -61,6 +61,9 @@ function saveConfig(field, value)
     WriteFile("scripts/big-brownie/config.json", json_str, false)
 end
 
+------------------------------------------------------------------------------------------
+--- Shows the config GUI and handles the configuration file according to the inputs.
+------------------------------------------------------------------------------------------
 function showGUI()
 
     local frame = AceGUI:Create("Window")
