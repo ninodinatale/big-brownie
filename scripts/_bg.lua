@@ -6,7 +6,8 @@ local movement = Tinkr:require("scripts.big-brownie.modules.movement")
 local tinkrFns = Tinkr:require('Routine.Modules.Exports')
 local utils = Tinkr:require("scripts.big-brownie.modules.utils")
 
-local profile_json_str = ReadFile("scripts/big-brownie/profiles/" .. BB.profile)
+-- TODO: replace with battleground profiles.
+local profile_json_str = ReadFile("scripts/big-brownie/profiles/terokkar.json")
 
 if profile_json_str == false then
     utils.logerror("Could not read profile.")
@@ -70,7 +71,8 @@ Draw:Sync(function(draw)
     firstRun = false
 end)
 
-Draw:Enable()
+-- Setting the Draw reference to be able to enable and disable the sync.
+BB.scripts.bg.draw = Draw
 
 function getClosestWaypointIndex()
     local playerX, playerY, playerZ = ObjectPosition('player')
