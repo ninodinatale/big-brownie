@@ -37,10 +37,11 @@ Draw:Sync(function(draw)
 
         setClosestWaypointIndex()
 
-        handleEatingAndDrinking()
+        local startedEating = handleEatingAndDrinking()
+        if startedEating then return end
 
         -- Wait for finished eating or 100% health before walking the route.
-        if not tinkrFns.IsEatingOrDrinking() or tinkrFns.health() >= 100 then
+        if not tinkrFns.IsEatingOrDrinking() or tinkrFns.health() >= BB.config.eatingAtHp then
 
             draw:SetColor(draw.colors.white)
             draw:Circle(waypoints[nextWpIndex].x, waypoints[nextWpIndex].y, waypoints[nextWpIndex].z, 0.5)
@@ -117,6 +118,9 @@ function stopCombatIfNotStopped()
     return false
 end
 
+---
+--- Returns true player started eating, false otherwise.
+---
 function handleEatingAndDrinking()
     if tinkrFns.health() < BB.config.eatingAtHp then
         if not tinkrFns.IsEatingOrDrinking() then
@@ -124,9 +128,10 @@ function handleEatingAndDrinking()
             TurnLeftStop()
             TurnRightStop()
             Eval('RunMacroText("/use ' .. BB.config.food .. '")', 'r')
-            return
+            return true
         end
     end
+    return false
 end
 
 function getClosestAliveUnit(search_range)

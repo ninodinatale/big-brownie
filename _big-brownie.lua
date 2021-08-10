@@ -54,6 +54,8 @@ Command:Register({ 'gui' }, function()
 end)
 
 function saveConfig(field, value)
+    print(field)
+    print(value)
     BB.config[field] = value
     local json_str = JSON:Encode(BB.config)
     WriteFile("scripts/big-brownie/config.json", json_str, false)
