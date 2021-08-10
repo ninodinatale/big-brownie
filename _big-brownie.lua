@@ -14,7 +14,8 @@ _G.BB = {
     -- Default config
     config = {
       food = "",
-      routine = ""
+      routine = "",
+      eatingAtHp = 60
     },
 
     -- available modes ("scripts")
@@ -39,7 +40,9 @@ end
 
 local config = JSON:Decode(configStr)
 
-if type(config) == "table" then
+print(config)
+
+if config ~= false and type(config) == "table" then
     BB.config = config
 else
     utils.logerror("Could not read config file. Delete the config.json if it's malformed.")
@@ -83,13 +86,24 @@ function showGUI()
     ---
     --- Food name
     ---
-    -- Edit box
     local foodName = AceGUI:Create("EditBox")
     foodName:SetLabel("Food name")
     foodName:SetText(BB.config.food)
     foodName:SetFullWidth(true)
     foodName:SetCallback("OnEnterPressed", function(widget, event, text)
         saveConfig("food", text)
+    end)
+
+    ---
+    --- Eating at % HP
+    ---
+    local eatingAtHpSlider = AceGUI:Create("Slider")
+    eatingAtHpSlider:SetLabel("Eating at % HP")
+    eatingAtHpSlider:SetValue(BB.config.eatingAtHp)
+    eatingAtHpSlider:SetSliderValues(1, 100, 1)
+    eatingAtHpSlider:SetFullWidth(true)
+    eatingAtHpSlider:SetCallback("OnMouseUp", function(widget, event, value)
+        saveConfig("eatingAtHp", value)
     end)
 
     ---
@@ -149,6 +163,7 @@ function showGUI()
     ---
     frame:AddChild(routineName)
     frame:AddChild(foodName)
+    frame:AddChild(eatingAtHpSlider)
     frame:AddChild(startButton)
     frame:AddChild(stopButton)
 end

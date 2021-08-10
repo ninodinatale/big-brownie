@@ -26,9 +26,6 @@ if waypoints == nil then
     utils.logerror("Profile seems to be corrupt.")
 end
 
--- TODO: implement GUI to pass these values.
-local EATING_AT_HP = 60
-local FOOD_NAME = 'Clefthoof Ribs'
 local ENEMY_SEARCH_RANGE = 40
 
 local firstRun = true
@@ -121,12 +118,12 @@ function stopCombatIfNotStopped()
 end
 
 function handleEatingAndDrinking()
-    if tinkrFns.health() < EATING_AT_HP then
+    if tinkrFns.health() < BB.config.eatingAtHp then
         if not tinkrFns.IsEatingOrDrinking() then
             MoveForwardStop()
             TurnLeftStop()
             TurnRightStop()
-            Eval('RunMacroText("/use ' .. FOOD_NAME .. '")', 'r')
+            Eval('RunMacroText("/use ' .. BB.config.food .. '")', 'r')
             return
         end
     end
