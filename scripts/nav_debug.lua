@@ -1,0 +1,52 @@
+--local Tinkr = ...
+--local Common = Tinkr.Common
+--local Nav = Tinkr.Util.Nav
+--local Draw = Tinkr.Util.Draw:New()
+--local Navigation = Tinkr:require("scripts.big-brownie.modules.navigation")
+--
+-----
+-----
+-----
+--Draw:Sync(function(draw)
+--    local playerX, playerY, playerZ = ObjectPosition('player')
+--    local destinationX, destinationY, destinationZ = Common.ScreenToWorld(GetCursorPosition())
+--
+--    local path, pathType = Navigation.GeneratePath(playerX, playerY, playerZ, destinationX, destinationY, destinationZ)
+--
+--    local colorMap = {
+--        Draw.colors.green, -- Normal
+--        Draw.colors.red, -- NoPath
+--        Draw.colors.orange, -- NotUsingPath
+--        Draw.colors.purple, -- Short
+--        Draw.colors.grey, -- Blank
+--        Draw.colors.teal, -- Shortcut
+--        Draw.colors.yellow -- Incomplete
+--    }
+--
+--    local pathTypeName = 'unknown path type'
+--    local pathColor = Draw.colors.pink
+--
+--    local index = 0
+--    for key, value in pairs(Nav.PathType) do
+--        index = index + 1
+--        print(index)
+--        print(key)
+--        print(value)
+--        if value == pathType then
+--            pathTypeName = key
+--            pathColor = colorMap[index]
+--            break
+--        end
+--    end
+--
+--    draw:SetColor(pathColor)
+--    draw:Text(pathTypeName, "SourceCodePro", playerX, playerY, playerZ)
+--
+--    for index, waypoint in ipairs(path) do
+--        if (index - 1 >= 1) then
+--            draw:Line(waypoint.x, waypoint.y, waypoint.z, path[index - 1].x, path[index - 1].y, path[index - 1].z)
+--        end
+--    end
+--
+--end)
+--Draw:Enable()

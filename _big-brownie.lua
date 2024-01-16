@@ -10,168 +10,192 @@
 --- references.
 ---------------------------------------------------------------
 _G.BB = {
-
-    -- Default config
-    config = {
-      food = "",
-      routine = "",
-      eatingAtHp = 60
-    },
-
-    -- available modes ("scripts")
     scripts = {
-        bg = {
-            draw = nil
-        }
     }
 }
 
 local Tinkr = ...
 local Command = Tinkr.Util.Commands:New('bb')
-local utils = Tinkr:require("scripts.big-brownie.modules.utils")
-local AceGUI = Tinkr.Util.AceGUI
-local JSON = Tinkr.Util.JSON
+local Common = Tinkr.Common
+local Draw = Tinkr.Util.Draw:New()
+local Utils = Tinkr:require("scripts.big-brownie.modules.utils")
+local Detour = Tinkr.Util.Detour
+local Legacy = Tinkr:require("scripts.big-brownie.scripts.legacy")
+local CreateRoute = Tinkr:require("scripts.big-brownie.scripts.create_route")
+local NavDebug = Tinkr:require("scripts.big-brownie.scripts.nav_debug")
+local Navigation = Tinkr:require("scripts.big-brownie.modules.navigation")
+local Movement = Tinkr:require("scripts.big-brownie.modules.movement")
+local Positioning = Tinkr:require("scripts.big-brownie.modules.positioning")
+local Netherwing = Tinkr:require("scripts.big-brownie.scripts.netherwing_eggfarm")
+local tinkrFns = Tinkr:require('Routine.Modules.Exports')
+local ObjectManager = Tinkr.Util.ObjectManager
+local Nav = Tinkr.Util.Nav
 
-local configStr = ReadFile("scripts/big-brownie/config.json")
-
-if configStr == false then
-    WriteFile("scripts/big-brownie/config.json", JSON:Encode(BB.config), false)
-end
-
-local config = JSON:Decode(configStr)
-
-print(config)
-
-if config ~= false and type(config) == "table" then
-    BB.config = config
-else
-    utils.logerror("Could not read config file. Delete the config.json if it's malformed.")
-    return
-end
-
-Command:Register({ 'gui' }, function()
-    showGUI()
+Command:Register({ 'legacy' }, function()
+    Legacy.showGUI()
 end)
 
-function saveConfig(field, value)
-    print(field)
-    print(value)
-    BB.config[field] = value
-    local json_str = JSON:Encode(BB.config)
-    WriteFile("scripts/big-brownie/config.json", json_str, false)
-end
+Command:Register({ 'create_route' }, function()
+    CreateRoute.showGUI()
+end)
 
-------------------------------------------------------------------------------------------
---- Shows the config GUI and handles the configuration file according to the inputs.
-------------------------------------------------------------------------------------------
-function showGUI()
+Command:Register({ 'netherwing' }, function()
+    Netherwing.showGUI()
+end)
 
-    local frame = AceGUI:Create("Window")
-    frame:SetTitle("Big-Brownie")
-    frame:EnableResize(false)
-    frame:SetWidth(300)
-    frame:SetHeight(300)
-    frame:SetLayout("List")
-    frame:SetCallback("OnClose", function(widget)
+Command:Register({ 'printTinkrObj' }, function()
+    Utils.printMemberOf(_G, "scripts/big-brownie/global-object.yml", 1)
+end)
+
+Command:Register({ 'nav_debug' }, function()
+    Utils.printMemberOf(_G, "scripts/big-brownie/global-object.yml", 1)
+end)
+
+Command:Register({ 'b' }, function()
+    local tx, ty, tz = -4172.6518554688, 297.49304199219, 124.34543609619
+    local px, py, pz = ObjectPosition('player')
+    local theta = Positioning.getTargetRadians(px, py, tx, ty)
+
+    local newX, newY, newZ = RotateVector(tx, ty, tz, theta, 0);
+
+    Draw:Sync(function(draw)
+        draw:SetColor(draw.colors.green)
+        draw:Line(px, py, pz, tx, ty, tz)
+        draw:SetColor(draw.colors.red)
+        draw:Circle(newX, newY, newZ, 0.5)
     end)
+    Draw:Enable()
 
 
-    ---
-    --- Routine name
-    ---
-    -- Edit box
-    local routineName = AceGUI:Create("EditBox")
-    routineName:SetLabel("Routine name")
-    routineName:SetText(BB.config.routine)
-    routineName:SetFullWidth(true)
-    routineName:SetCallback("OnEnterPressed", function(widget, event, text)
-        saveConfig("routine", text)
-    end)
+end)
 
-    ---
-    --- Food name
-    ---
-    local foodName = AceGUI:Create("EditBox")
-    foodName:SetLabel("Food name")
-    foodName:SetText(BB.config.food)
-    foodName:SetFullWidth(true)
-    foodName:SetCallback("OnEnterPressed", function(widget, event, text)
-        saveConfig("food", text)
-    end)
+Command:Register({ 'bb' }, function()
+    local tx, ty, tz = -4172.6518554688, 297.49304199219, 126.34543609619
+    local px, py, pz = ObjectPosition('player')
+    local path = Tinkr.Util.Fly:GetFlightRoute(px, py, pz, tx, ty, tz)
 
-    ---
-    --- Eating at % HP
-    ---
-    local eatingAtHpSlider = AceGUI:Create("Slider")
-    eatingAtHpSlider:SetLabel("Eating at % HP")
-    eatingAtHpSlider:SetValue(BB.config.eatingAtHp)
-    eatingAtHpSlider:SetSliderValues(1, 100, 1)
-    eatingAtHpSlider:SetFullWidth(true)
-    eatingAtHpSlider:SetCallback("OnMouseUp", function(widget, event, value)
-        saveConfig("eatingAtHp", value)
-    end)
-
-    ---
-    --- Start/Stop buttons
-    ---
-    local startButton = AceGUI:Create("Button")
-    local stopButton = AceGUI:Create("Button")
-
-    --- start
-    startButton:SetText('Start')
-    startButton:SetDisabled(BB.scripts.bg.draw.enabled)
-    startButton:SetFullWidth(true)
-    startButton:SetCallback("OnClick", function(widget, event, text)
-        local routineExists = false
-        for key, value in pairs(Tinkr.Routine.routines) do
-            if key == BB.config.routine then
-                routineExists = true
-                break
+    Draw:Sync(function(draw)
+        if path then
+            for index, waypoint in ipairs(path) do
+                if (index - 1 >= 1) then
+                    draw:SetColor(draw.colors.green)
+                    draw:Line(waypoint.x, waypoint.y, waypoint.z, path[index - 1].x, path[index - 1].y, path[index - 1].z)
+                end
             end
         end
+    end)
+    Draw:Enable()
 
-        if not routineExists then
-            utils.logerror("Provided routine " .. utils.yellow(BB.config.routine) .. " does not exist.")
-            return
+
+end)
+
+Command:Register({ 'nav' }, function()
+    Draw:Sync(function(draw)
+        local playerX, playerY, playerZ = ObjectPosition('player')
+
+        local nearestObject = nil
+        local currentDistance = nil
+        for object in ObjectManager:Objects() do
+            if ObjectName(object) == 'Netherwing Egg' then
+                local x, y, z = ObjectPosition(object)
+                local distance = Common.Distance(playerX, playerY, playerZ, x, y, z)
+
+                if not currentDistance or distance < currentDistance then
+                    currentDistance = distance
+                    nearestObject = object
+                end
+            end
         end
-
-
-
-        Tinkr.Routine:LoadRoutine(BB.config.routine)
-        if not BB.scripts.bg.draw.enabled then
-            BB.scripts.bg.draw:Enable()
-            startButton:SetDisabled(true)
-            stopButton:SetDisabled(false)
-            utils.log("Started.")
+        if nearestObject then
+            local objX, objY, objZ = ObjectPosition(nearestObject)
+            if currentDistance > 1 then
+                local path = Tinkr.Util.Fly:GetFlightRoute(playerX, playerY, playerZ, objX, objY, objZ)
+                if path then
+                    for index, waypoint in ipairs(path) do
+                        if (index - 1 >= 1) then
+                            draw:Line(waypoint.x, waypoint.y, waypoint.z, path[index - 1].x, path[index - 1].y, path[index - 1].z)
+                        end
+                    end
+                end
+            end
         end
     end)
+    Draw:Enable()
+end)
 
-    --- stop
-    stopButton:SetText('Stop')
-    stopButton:SetDisabled(not BB.scripts.bg.draw.enabled)
-    stopButton:SetFullWidth(true)
-    stopButton:SetCallback("OnClick", function(widget, event, text)
-        Tinkr.Routine:Disable()
-        MoveForwardStop()
-        TurnLeftStop()
-        TurnRightStop()
-        if BB.scripts.bg.draw.enabled then
-            BB.scripts.bg.draw:Disable()
-            startButton:SetDisabled(false)
-            stopButton:SetDisabled(true)
-            utils.log("Stopped.")
+Command:Register({ 'test' }, function()
+    local x2, y2, z2 = -4172.6518554688, 297.49304199219, 124.34543609619
+    local playerX, playerY, playerZ = ObjectPosition('player')
+
+    Draw:Sync(function(draw)
+        runPathObj = Movement.RunPath:New(runPathObj, playerX, playerY, playerZ, x2, y2, z2)
+        local type = runPathObj:Start()
+        if type == Movement.RunPath.Type.REACHED then
+            print("reached")
         end
+
+        Detour:DebugPath(runPathObj.path)
+        draw:SetColor(draw.colors.green)
+        draw:Circle(runPathObj.path[runPathObj.nextWpIndex].x, runPathObj.path[runPathObj.nextWpIndex].y, runPathObj.path[runPathObj.nextWpIndex].z, 0.5)
+        draw:Text(runPathObj.path, "SourceCodePro", runPathObj.path[runPathObj.nextWpIndex].x, runPathObj.path[runPathObj.nextWpIndex].y, runPathObj.path[runPathObj.nextWpIndex].z + 1)
     end)
+    Draw:Enable()
 
-    ---
-    --- Compose groups
-    ---
-    frame:AddChild(routineName)
-    frame:AddChild(foodName)
-    frame:AddChild(eatingAtHpSlider)
-    frame:AddChild(startButton)
-    frame:AddChild(stopButton)
-end
+    --end
+    --local x2, y2, z2 = -4172.6518554688, 297.49304199219, 124.34543609619
+    --local playerX, playerY, playerZ = ObjectPosition('player')
+    --local path, type = Navigation.GeneratePath(playerX, playerY, playerZ, x2, y2, z2)
+    --local debugState = 0
+    --Detour:DebugPath(path)
+    --print(type)
+    --local nextWpIndex = 1
+    ----if pathType == Tinkr.Util.Detour.PathType.PATHFIND_NORMAL then
+    --if table.getn(path) > 0 then
+    --    Draw:Sync(function(draw)
+    --        --for index, waypoint in ipairs(path) do
+    --        --    draw:SetColor(draw.colors.green)
+    --        --    draw:Circle(waypoint.x, waypoint.y, waypoint.z, 0.5)
+    --        --    draw:Text(index, "SourceCodePro", waypoint.x, waypoint.y, waypoint.z + 1)
+    --        --end
+    --        draw:SetColor(draw.colors.green)
+    --        draw:Circle(path[nextWpIndex].x, path[nextWpIndex].y, path[nextWpIndex].z, 0.5)
+    --        draw:Text(nextWpIndex, "SourceCodePro", path[nextWpIndex].x, path[nextWpIndex].y, path[nextWpIndex].z + 1)
+    --        ---
+    --        --- COPY PASTE START
+    --        ---
+    --        local playerX, playerY, playerZ = ObjectPosition('player')
+    --        local distance = Common.Distance(playerX, playerY, playerZ, path[nextWpIndex].x, path[nextWpIndex].y, path[nextWpIndex].z)
+    --
+    --        if distance < 1 then
+    --            MoveForwardStop()
+    --            nextWpIndex = nextWpIndex + 1
+    --
+    --            if nextWpIndex > table.getn(path) then
+    --                -- Start from first waypoint again.
+    --                nextWpIndex = 1
+    --            end
+    --            MoveTo(path[nextWpIndex].x, path[nextWpIndex].y, path[nextWpIndex].z)
+    --            return
+    --        end
+    --        --if distance < 3 then
+    --        --    MoveForwardStart()
+    --        --    return
+    --        --end
+    --
+    --        if not tinkrFns.moving() then
+    --            utils.runDebounced(function()
+    --                MoveTo(path[nextWpIndex].x, path[nextWpIndex].y, path[nextWpIndex].z)
+    --            end, 1000)
+    --        end
+    --        ---
+    --        --- COPY PASTE END
+    --        ---
+    --
+    --    end)
+    --    Draw:Enable()
+    --end
+    ----end
+end)
 
-utils.log('Ready.')
-utils.log("Write " .. utils.yellow("/bb gui") .. " to open the config window.")
+Utils.log('Ready.')
+Utils.log("Write " .. Utils.yellow("/bb legacy") .. " to open the legacy window.")
